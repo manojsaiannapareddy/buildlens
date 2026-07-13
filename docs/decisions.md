@@ -71,3 +71,42 @@ sole source of truth. Line endings normalized to LF (core.autocrlf=input).
 - (−) One more system to learn (Linux) on top of the project itself.
 - (−) Two-world complexity: files in /mnt/c vs ~; discipline required to keep
   projects on the Linux side.
+
+## ADR-003: Dependency management with uv, a lock file, and the src layout
+
+**Date:** 2026-07-11 · **Status:** Accepted
+
+**Context.** The backend will depend on outside libraries (FastAPI, SQLAlchemy,
+etc.). Those libraries must install to the exact same versions in three places:
+my laptop, the Docker image, and CI. If versions drift between those places,
+we get "works on my machine" bugs. Python's default tool (pip alone, with a
+hand-written requirements.txt) does not guarantee this.
+
+**Decision.**
+- Use **uv** to create the virtual environment, resolve dependencies, and
+  maintain a lock file (`uv.lock`), which is committed to Git.
+- Declare only *direct* dependencies in `pyproject.toml`; the lock file
+  records the exact version and hash of *everything*, including
+  dependencies-of-dependencies.
+- Put the package code in `backend/src/buildlens/` (the "src layout") so tests
+  and tools always import the installed package, never a same-named folder
+  that happens to be nearby.
+- Use **hatchling** as the build backend (the standard, boring choice).
+
+**Alternatives considered.**
+- *pip + requirements.txt:* rejected — no lock discipline, no hash checking,
+  transitive versions drift over time.
+- *pip-tools:* workable, but a manual two-step (edit .in, compile .txt) that
+  uv does in one.
+- *Poetry:* does everything but is heavier and slower, and the ecosystem's
+  momentum has moved to uv.
+
+**Consequences.**
+- (+) One fast tool handles venv + resolution + locking.
+- (+) Dev, Docker, and CI install byte-identical environments from uv.lock.
+- (−) uv is newer, so many tutorials online show pip/Poetry commands that
+  don't match our workflow.
+- (−) Anyone cloning the repo must install uv first.
+- Incident note: first sync built an empty package because the source file
+  didn't exist yet, and the cache preserved the broken build. Diagnosed by
+  inspecting site-packages; fixed with `uv sync --reinstall-package buildlens`.

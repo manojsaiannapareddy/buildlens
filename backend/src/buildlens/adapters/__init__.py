@@ -1,0 +1,1 @@
+"""Clients for external systems (GitHub, LLM, S3, database). No business logic."""

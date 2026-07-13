@@ -1,0 +1,1 @@
+"""Transport layer: HTTP routes, schemas, SSE. May import core. Never imports db."""

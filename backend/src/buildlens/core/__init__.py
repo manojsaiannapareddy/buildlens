@@ -1,0 +1,1 @@
+"""Domain logic: ingestion, signatures, retrieval, diagnosis. Never imports SDKs directly."""
