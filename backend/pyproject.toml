@@ -3,7 +3,9 @@ name = "buildlens"
 version = "0.1.0"
 description = "LLM-powered diagnostics for CI failures"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "pydantic-settings>=2.14.2",
+]
 
 [build-system]
 requires = ["hatchling"]
