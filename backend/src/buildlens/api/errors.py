@@ -26,7 +26,13 @@ def problem_response(
         "detail": detail,
         "request_id": request_id,
     }
-    return JSONResponse(status_code=status, content=body, media_type=PROBLEM_CONTENT_TYPE)
+    headers = {"X-Request-ID": request_id} if request_id else None
+    return JSONResponse(
+        status_code=status, 
+        content=body, 
+        media_type=PROBLEM_CONTENT_TYPE, 
+        headers=headers
+    )
 
 
 def add_error_handlers(app: FastAPI) -> None:
