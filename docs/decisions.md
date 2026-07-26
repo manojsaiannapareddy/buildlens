@@ -126,3 +126,28 @@ core/adapters, relaxed in tests).
  - (+) style debates ended, whole classes of bugs caught pre-runtime, refactors safer;
  - (−) annotation ceremony on every new function, occasional fights with library types,
    another gate that can block a commit when you're in a hurry.
+
+## ADR-005 Postgres as the only stateful service.
+
+**Date:** 2026-07-25. **Status:** Accepted
+
+**Context** BuildLens requires relational data storage, vector embeddings search
+(for AI/RAG), full-text search, and background job queues. The standard approach
+uses four separate specialized services (e.g., PostgreSQL + Pinecone/Qdrant +
+Elasticsearch + Redis). However, operating multiple stateful databases in early
+development adds unnecessary operational overhead, infrastructure complexity,
+and higher hosting costs.
+
+### Decision
+We will use PostgreSQL (via the `pgvector/pgvector:pg16` Docker image in development
+and AWS RDS in production) as the single stateful database for all storage, vector search,
+text retrieval, and queue management.
+
+### Alternatives Considered
+* **Dedicated specialized stores (e.g., Redis + Qdrant + Postgres):** Offers slightly
+higher performance at scale for each concern, but introduces four separate data pipelines
+to manage, back up, and monitor.
+
+### Consequences
+* **Positive (+):** Single backup strategy, transactional enqueueing (writing domain data and background jobs in one transaction), and reduced infrastructure setup.
+* **Negative (-):** Postgres is "good enough" for vector search and queues rather than best-in-class; we may hit scale ceilings if traffic grows dramatically.
