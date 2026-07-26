@@ -8,6 +8,7 @@ Configured once at startup, driven by Settings. Everything else just does:
 import logging
 
 import structlog
+from structlog.typing import Processor
 
 from buildlens.core.config import Settings
 
@@ -15,7 +16,7 @@ from buildlens.core.config import Settings
 def configure_logging(settings: Settings) -> None:
     level = getattr(logging, settings.log_level)
 
-    processors = [
+    processors: list[Processor] = [
         structlog.contextvars.merge_contextvars,
         structlog.processors.add_log_level,
         structlog.processors.TimeStamper(fmt="iso", utc=True),

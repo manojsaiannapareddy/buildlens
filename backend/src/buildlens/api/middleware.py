@@ -6,9 +6,10 @@ and echoed back in the response headers (NFR-13).
 """
 
 import uuid
+from collections.abc import Awaitable, Callable
 
 import structlog
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 
 REQUEST_ID_HEADER = "X-Request-ID"
 _MAX_INBOUND_ID_LENGTH = 128
@@ -16,7 +17,10 @@ _MAX_INBOUND_ID_LENGTH = 128
 
 def add_request_id_middleware(app: FastAPI) -> None:
     @app.middleware("http")
-    async def request_id_middleware(request: Request, call_next):
+    async def request_id_middleware(
+        request: Request, 
+        call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         inbound = request.headers.get(REQUEST_ID_HEADER, "")
         request_id = inbound[:_MAX_INBOUND_ID_LENGTH] or str(uuid.uuid4())
 

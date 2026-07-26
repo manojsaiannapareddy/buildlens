@@ -1,5 +1,7 @@
 """Shared pytest fixtures for the buildlens test suite."""
 
+from collections.abc import Iterator
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -8,7 +10,7 @@ from buildlens.core.config import get_settings
 
 
 @pytest.fixture(autouse=True)
-def clear_settings_cache():
+def clear_settings_cache() -> Iterator[None]:
     """Isolate tests from each other's cached Settings (get_settings is lru_cached)."""
     get_settings.cache_clear()
     yield

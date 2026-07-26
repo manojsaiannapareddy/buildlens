@@ -110,3 +110,19 @@ hand-written requirements.txt) does not guarantee this.
 - Incident note: first sync built an empty package because the source file
   didn't exist yet, and the cache preserved the broken build. Diagnosed by
   inspecting site-packages; fixed with `uv sync --reinstall-package buildlens`.
+
+## ADR-004L Code quality toolchain: ruff and mypy with graded strictness.
+
+**Date:** 2026-07-25 . **Status:** Accepted
+
+**Context.** Implemented ruff and mypy in the project to check formating and 
+type errors accross the files while fixing them instantly with no complications.
+
+**Decision** — ruff for lint+format (one tool replacing black/flake8/isort/pyupgrade, 
+config in pyproject), mypy with graded strictness (baseline everywhere, stricter in 
+core/adapters, relaxed in tests).
+
+**Consequences** — 
+ - (+) style debates ended, whole classes of bugs caught pre-runtime, refactors safer; 
+ - (−) annotation ceremony on every new function, occasional fights with library types, 
+   another gate that can block a commit when you're in a hurry.
