@@ -2,8 +2,6 @@
 
 from fastapi.testclient import TestClient
 
-from buildlens.api.app import create_app
-
 
 def test_healthz_returns_ok(client: TestClient) -> None:
 
@@ -26,6 +24,7 @@ def test_unknown_route_returns_problem_details(client: TestClient) -> None:
     assert body["request_id"] is not None
     assert response.headers["x-request-id"] == body["request_id"]
 
+
 def test_unhandled_error_returns_opaque_problem_details(crashing_client: TestClient) -> None:
     response = crashing_client.get("/test-only/crash")
 
@@ -38,6 +37,7 @@ def test_unhandled_error_returns_opaque_problem_details(crashing_client: TestCli
     # The leak rule: internals must never reach the client.
     assert "RuntimeError" not in response.text
     assert "hunter2" not in response.text
+
 
 def test_inbound_request_id_is_honored(client: TestClient) -> None:
 

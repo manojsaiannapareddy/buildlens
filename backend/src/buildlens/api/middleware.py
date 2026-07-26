@@ -10,7 +10,6 @@ import uuid
 import structlog
 from fastapi import FastAPI, Request
 
-
 REQUEST_ID_HEADER = "X-Request-ID"
 _MAX_INBOUND_ID_LENGTH = 128
 

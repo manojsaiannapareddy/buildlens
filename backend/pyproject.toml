@@ -21,4 +21,12 @@ packages = ["src/buildlens"]
 dev = [
     "httpx2>=2.7.0",
     "pytest>=9.1.1",
+    "ruff>=0.16.0",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

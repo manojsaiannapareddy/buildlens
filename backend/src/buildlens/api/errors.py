@@ -28,10 +28,7 @@ def problem_response(
     }
     headers = {"X-Request-ID": request_id} if request_id else None
     return JSONResponse(
-        status_code=status, 
-        content=body, 
-        media_type=PROBLEM_CONTENT_TYPE, 
-        headers=headers
+        status_code=status, content=body, media_type=PROBLEM_CONTENT_TYPE, headers=headers
     )
 
 
