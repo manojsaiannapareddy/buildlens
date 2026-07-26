@@ -115,14 +115,14 @@ hand-written requirements.txt) does not guarantee this.
 
 **Date:** 2026-07-25 . **Status:** Accepted
 
-**Context.** Implemented ruff and mypy in the project to check formating and 
+**Context.** Implemented ruff and mypy in the project to check formating and
 type errors accross the files while fixing them instantly with no complications.
 
-**Decision** — ruff for lint+format (one tool replacing black/flake8/isort/pyupgrade, 
-config in pyproject), mypy with graded strictness (baseline everywhere, stricter in 
+**Decision** — ruff for lint+format (one tool replacing black/flake8/isort/pyupgrade,
+config in pyproject), mypy with graded strictness (baseline everywhere, stricter in
 core/adapters, relaxed in tests).
 
-**Consequences** — 
- - (+) style debates ended, whole classes of bugs caught pre-runtime, refactors safer; 
- - (−) annotation ceremony on every new function, occasional fights with library types, 
+**Consequences** —
+ - (+) style debates ended, whole classes of bugs caught pre-runtime, refactors safer;
+ - (−) annotation ceremony on every new function, occasional fights with library types,
    another gate that can block a commit when you're in a hurry.
