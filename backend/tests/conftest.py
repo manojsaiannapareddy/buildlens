@@ -18,9 +18,9 @@ def clear_settings_cache() -> Iterator[None]:
 
 
 @pytest.fixture
-def client() -> TestClient:
-    """A test client for a freshly built app."""
-    return TestClient(create_app())
+def client() -> Iterator[TestClient]:
+    with TestClient(create_app()) as test_client:
+        yield test_client
 
 
 @pytest.fixture
