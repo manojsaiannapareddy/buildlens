@@ -15,6 +15,7 @@ class Settings(BaseSettings):
 
     environment: Literal["dev", "test", "prod"] = "dev"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    database_url: str = ""
 
 
 @lru_cache

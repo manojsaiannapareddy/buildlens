@@ -4,8 +4,10 @@ version = "0.1.0"
 description = "LLM-powered diagnostics for CI failures"
 requires-python = ">=3.12"
 dependencies = [
+    "asyncpg>=0.31.0",
     "fastapi>=0.139.0",
     "pydantic-settings>=2.14.2",
+    "sqlalchemy[asyncio]>=2.0.51",
     "structlog>=26.1.0",
     "uvicorn[standard]>=0.51.0",
 ]

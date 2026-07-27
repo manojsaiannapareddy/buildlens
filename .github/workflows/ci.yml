@@ -13,6 +13,8 @@ jobs:
   quality:
     name: Lint, types, tests
     runs-on: ubuntu-latest
+    env:
+         BUILDLENS_DATABASE_URL: postgresql+asyncpg://buildlens:localdev@localhost:5432/buildlens
     defaults:
       run:
         working-directory: backend

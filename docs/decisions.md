@@ -151,3 +151,38 @@ to manage, back up, and monitor.
 ### Consequences
 * **Positive (+):** Single backup strategy, transactional enqueueing (writing domain data and background jobs in one transaction), and reduced infrastructure setup.
 * **Negative (-):** Postgres is "good enough" for vector search and queues rather than best-in-class; we may hit scale ceilings if traffic grows dramatically.
+
+## ADR-006: Async SQLAlchemy for Database Access
+
+**Date:** 2026-07-26
+**Status:** Accepted
+
+### Context
+BuildLens requires a database access layer to query PostgreSQL safely, efficiently, and with strong Python type safety across both the FastAPI web server and background workers.
+
+Because FastAPI is an asynchronous ASGI application, database queries are I/O operations that must be non-blocking. Synchronous database drivers would block the Python event loop, freezing all concurrent requests while waiting on database network calls.
+
+### Decision
+We will use **SQLAlchemy 2.0 (Async)** with the **`asyncpg`** driver for all database communication.
+
+Key implementation choices:
+1. **Engine & Connection Pooling:** A long-lived `AsyncEngine` will manage connection pooling globally per application process using `pool_pre_ping=True` to detect stale connections before reuse.
+2. **Session Lifecycle:** Short-lived unit-of-work sessions will be created using `async_sessionmaker`.
+3. **Explicit Behavior Flags:**
+   * `expire_on_commit=False`: Prevents post-commit attributes from triggering hidden, non-awaited lazy queries (a common async footgun).
+   * `autoflush=False`: Ensures no implicit database flushes occur prior to explicit commits.
+
+### Alternatives Considered
+* **Raw `asyncpg`:** Extremely fast, but lacks an ORM, schema migration tooling (like Alembic), and parameter-binding abstractions.
+* **Sync SQLAlchemy:** Simpler to write, but blocks the FastAPI event loop under concurrent load.
+* **Lighter ORMs (Tortoise ORM / Piccolo):** Smaller footprint, but less mature migration tooling and a smaller ecosystem compared to SQLAlchemy.
+
+### Consequences
+* **Positive (+):**
+  * Fully asynchronous non-blocking I/O keeps API endpoints responsive.
+  * Native parameter binding provides robust protection against SQL injection.
+  * Seamless integration with Alembic for future database schema migrations.
+  * Easy fallback to raw SQL queries (`text()`) when needed.
+* **Negative (-):**
+  * Asynchronous ORM patterns have a steeper learning curve than synchronous code.
+  * Requires careful model design to avoid costly or inefficient N+1 query patterns.
