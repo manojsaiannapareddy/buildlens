@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "LLM-powered diagnostics for CI failures"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.18.5",
     "asyncpg>=0.31.0",
     "fastapi>=0.139.0",
     "pydantic-settings>=2.14.2",
@@ -53,3 +54,8 @@ warn_return_any = true
 [[tool.mypy.overrides]]
 module = ["tests.*"]
 disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: requires a live database",
+]
