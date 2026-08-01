@@ -4,6 +4,7 @@ from enum import StrEnum
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     DateTime,
     ForeignKey,
     Index,
@@ -18,6 +19,19 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from buildlens.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin, _enum
+
+
+class RepoStatus(StrEnum):
+    ACTIVE = "active"
+    PAUSED = "paused"
+    DELETING = "deleting"
+
+
+class IngestState(StrEnum):
+    PENDING = "pending"
+    FETCHING = "fetching"
+    READY = "ready"
+    FAILED = "failed"
 
 
 class RunConclusion(StrEnum):
@@ -42,7 +56,14 @@ class Repository(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     owner: Mapped[str] = mapped_column(String(255), index=True)
     name: Mapped[str] = mapped_column(String(255), index=True)
     default_branch: Mapped[str] = mapped_column(String(255), default="main")
-    is_active: Mapped[bool] = mapped_column(default=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    status: Mapped[RepoStatus] = mapped_column(
+        _enum(RepoStatus, "repo_status"), default=RepoStatus.ACTIVE, index=True
+    )
+    last_polled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_synced_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    runs_etag: Mapped[str | None] = mapped_column(String(255))
 
     runs: Mapped[list["WorkflowRun"]] = relationship(
         "WorkflowRun", back_populates="repository", cascade="all, delete-orphan"

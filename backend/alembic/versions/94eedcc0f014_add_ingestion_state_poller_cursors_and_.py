@@ -1,8 +1,8 @@
-"""add repositories, runs, jobs, and task queue
+"""add ingestion state, poller cursors, and job steps
 
-Revision ID: 012089361fbb
-Revises: a8478c9539ea
-Create Date: 2026-07-29 20:43:52.810628
+Revision ID: 94eedcc0f014
+Revises: 012089361fbb
+Create Date: 2026-07-31 18:15:14.383384
 
 """
 
@@ -13,8 +13,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "012089361fbb"
-down_revision: str | Sequence[str] | None = "a8478c9539ea"
+revision: str = "94eedcc0f014"
+down_revision: str | Sequence[str] | None = "012089361fbb"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
@@ -30,7 +30,6 @@ def upgrade() -> None:
     )
     op.add_column("repositories", sa.Column("runs_etag", sa.String(255), nullable=True))
 
-    # Backfill status derived from is_active
     op.execute(
         "UPDATE repositories SET status = CASE WHEN is_active THEN 'active' ELSE 'paused' END"
     )
@@ -43,7 +42,6 @@ def upgrade() -> None:
     op.add_column("workflow_runs", sa.Column("ingest_state", sa.String(50), nullable=True))
     op.add_column("workflow_runs", sa.Column("raw_log_uri", sa.String(500), nullable=True))
 
-    # Backfills
     op.execute("UPDATE workflow_runs SET workflow_name = 'unknown' WHERE workflow_name IS NULL")
     op.execute("UPDATE workflow_runs SET ingest_state = 'pending' WHERE ingest_state IS NULL")
     op.alter_column("workflow_runs", "workflow_name", nullable=False)
@@ -52,7 +50,6 @@ def upgrade() -> None:
         op.f("ix_workflow_runs_ingest_state"), "workflow_runs", ["ingest_state"], unique=False
     )
 
-    # Make dates nullable
     op.alter_column(
         "workflow_runs", "started_at", existing_type=sa.DateTime(timezone=True), nullable=True
     )
@@ -67,27 +64,28 @@ def upgrade() -> None:
     )
     op.add_column("jobs", sa.Column("log_line_count", sa.Integer(), nullable=True))
 
-    # Backfill
     op.execute("UPDATE jobs SET log_line_count = 0 WHERE log_line_count IS NULL")
     op.alter_column("jobs", "log_line_count", nullable=False)
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_jobs_workflow_run_id"), table_name="jobs")
-    op.drop_index(op.f("ix_jobs_github_job_id"), table_name="jobs")
-    op.drop_table("jobs")
-    op.drop_index(op.f("ix_workflow_runs_repository_id"), table_name="workflow_runs")
-    op.drop_index(op.f("ix_workflow_runs_github_run_id"), table_name="workflow_runs")
-    op.drop_index(op.f("ix_workflow_runs_conclusion"), table_name="workflow_runs")
-    op.drop_table("workflow_runs")
-    op.drop_index(op.f("ix_repositories_owner"), table_name="repositories")
-    op.drop_index(op.f("ix_repositories_name"), table_name="repositories")
-    op.drop_index(op.f("ix_repositories_github_id"), table_name="repositories")
-    op.drop_table("repositories")
-    op.drop_index(op.f("ix_ingestion_tasks_status"), table_name="ingestion_tasks")
-    op.drop_index(
-        "ix_ingestion_tasks_claimable",
-        table_name="ingestion_tasks",
-        postgresql_where=sa.text("status = 'pending'"),
+    op.drop_column("jobs", "log_line_count")
+    op.drop_column("jobs", "steps")
+
+    op.alter_column(
+        "workflow_runs", "completed_at", existing_type=sa.DateTime(timezone=True), nullable=False
     )
-    op.drop_table("ingestion_tasks")
+    op.alter_column(
+        "workflow_runs", "started_at", existing_type=sa.DateTime(timezone=True), nullable=False
+    )
+    op.drop_index(op.f("ix_workflow_runs_ingest_state"), table_name="workflow_runs")
+    op.drop_column("workflow_runs", "raw_log_uri")
+    op.drop_column("workflow_runs", "ingest_state")
+    op.drop_column("workflow_runs", "branch")
+    op.drop_column("workflow_runs", "workflow_name")
+
+    op.drop_index(op.f("ix_repositories_status"), table_name="repositories")
+    op.drop_column("repositories", "runs_etag")
+    op.drop_column("repositories", "last_synced_run_at")
+    op.drop_column("repositories", "last_polled_at")
+    op.drop_column("repositories", "status")
