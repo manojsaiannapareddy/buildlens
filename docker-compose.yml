@@ -29,5 +29,18 @@ services:
       postgres:
         condition: service_healthy
 
+  worker:
+    build:
+      context: ./backend
+    container_name: buildlens-worker
+    command: ["python", "-m", "buildlens.main_worker"]
+    environment:
+      BUILDLENS_ENVIRONMENT: dev
+      BUILDLENS_LOG_LEVEL: INFO
+      BUILDLENS_DATABASE_URL: postgresql+asyncpg://buildlens:localdev@postgres:5432/buildlens
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres-data:

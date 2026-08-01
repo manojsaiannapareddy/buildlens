@@ -1,6 +1,7 @@
 """Shared pytest fixtures for the buildlens test suite."""
 
 from collections.abc import AsyncGenerator, Iterator
+from typing import Any
 
 import pytest
 import pytest_asyncio
@@ -54,3 +55,12 @@ async def clean_database(
     async with session_factory() as session:
         await session.execute(text("TRUNCATE TABLE ingestion_tasks CASCADE;"))
         await session.commit()
+
+
+@pytest_asyncio.fixture
+async def clean_db(session_factory: Any) -> AsyncGenerator[None, None]:
+    """Truncate task rows so integration tests start from a known state."""
+    async with session_factory() as session:
+        await session.execute(text("TRUNCATE TABLE ingestion_tasks CASCADE;"))
+        await session.commit()
+    yield
