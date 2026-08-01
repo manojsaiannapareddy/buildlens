@@ -41,3 +41,9 @@ db-reset: ## DESTROY the database and rebuild it
 
 build: ## Build the image
 	docker compose build api
+
+check: lint types migration-check test ## Everything CI runs
+	@echo "All gates passed."
+
+migration-check: ## Fail if models and migrations have drifted
+	cd backend && uv run alembic check
