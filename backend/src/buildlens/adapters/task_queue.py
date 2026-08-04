@@ -110,3 +110,13 @@ async def recover_expired_leases(session: AsyncSession) -> int:
     if recovered:
         logger.warning("task.leases_recovered", count=recovered)
     return recovered
+
+
+async def defer(session: AsyncSession, task: IngestionTask, until: datetime) -> None:
+    """Reschedule without counting a failure (e.g. rate limits: not broken, just not ready)."""
+    task.status = TaskStatus.PENDING
+    task.next_run_at = until
+    task.lease_expires_at = None
+    task.attempts = max(0, task.attempts - 1)
+    await session.flush()
+    logger.info("task.deferred", task_id=str(task.id), until=until.isoformat())

@@ -12,9 +12,6 @@ down: ## Stop the stack (volumes preserved)
 logs: ## Follow application logs
 	docker compose logs -f api
 
-check: lint types test ## Everything CI runs
-	@echo "All gates passed."
-
 lint: ## Lint and format check
 	cd backend && uv run ruff check . && uv run ruff format --check .
 

@@ -53,7 +53,12 @@ async def clean_database(
 ) -> None:
     """Truncate tables between integration tests to prevent state leakage."""
     async with session_factory() as session:
-        await session.execute(text("TRUNCATE TABLE ingestion_tasks CASCADE;"))
+        await session.execute(
+            text(
+                "TRUNCATE repositories, workflow_runs, jobs, ingestion_tasks "
+                "RESTART IDENTITY CASCADE"
+            )
+        )
         await session.commit()
 
 

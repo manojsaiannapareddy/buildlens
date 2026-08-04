@@ -15,6 +15,8 @@ import structlog
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from buildlens.adapters import task_queue
+from buildlens.core import ingestion
+from buildlens.core.exceptions import TaskDeferred
 from buildlens.db.models import IngestionTask, TaskType
 
 logger = structlog.get_logger()
@@ -30,8 +32,8 @@ async def _not_implemented(session: AsyncSession, task: IngestionTask) -> None:
 
 
 HANDLERS: dict[TaskType, Handler] = {
-    TaskType.BACKFILL_REPO: _not_implemented,
-    TaskType.POLL_REPO: _not_implemented,
+    TaskType.BACKFILL_REPO: ingestion.backfill_repo,
+    TaskType.POLL_REPO: ingestion.poll_repo,
     TaskType.INGEST_RUN: _not_implemented,
     TaskType.DIAGNOSE_RUN: _not_implemented,
     TaskType.GC_REPO: _not_implemented,
@@ -59,6 +61,13 @@ async def process_one(session_factory: async_sessionmaker[AsyncSession]) -> bool
             await task_queue.mark_done(work_session, claimed)
             await work_session.commit()
         logger.info("task.completed")
+    except TaskDeferred as deferral:
+        logger.info("task.deferred_by_handler")
+        async with session_factory() as defer_session:
+            deferred = await defer_session.get(IngestionTask, task.id)
+            if deferred is not None:
+                await task_queue.defer(defer_session, deferred, deferral.until)
+                await defer_session.commit()
     except Exception as exc:
         logger.exception("task.failed")
         async with session_factory() as fail_session:

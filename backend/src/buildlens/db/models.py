@@ -74,6 +74,12 @@ class Repository(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
 class WorkflowRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "workflow_runs"
+    workflow_name: Mapped[str] = mapped_column(String(255), default="unknown")
+    branch: Mapped[str | None] = mapped_column(String(255))
+    ingest_state: Mapped[IngestState] = mapped_column(
+        _enum(IngestState, "ingest_state"), default=IngestState.PENDING, index=True
+    )
+    raw_log_uri: Mapped[str | None] = mapped_column(String(500))
 
     repository_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("repositories.id", ondelete="CASCADE"), index=True
@@ -85,8 +91,8 @@ class WorkflowRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     conclusion: Mapped[RunConclusion] = mapped_column(
         _enum(RunConclusion, "run_conclusion"), index=True
     )
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     repository: Mapped["Repository"] = relationship("Repository", back_populates="runs")
     jobs: Mapped[list["Job"]] = relationship(
@@ -114,7 +120,8 @@ class Job(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     step_name: Mapped[str | None] = mapped_column(String(255))
     status: Mapped[JobStatus] = mapped_column(_enum(JobStatus, "job_status"))
     conclusion: Mapped[RunConclusion | None] = mapped_column(_enum(RunConclusion, "job_conclusion"))
-
+    steps: Mapped[dict | list | None] = mapped_column(JSONB)
+    log_line_count: Mapped[int] = mapped_column(Integer, default=0)
     workflow_run: Mapped["WorkflowRun"] = relationship("WorkflowRun", back_populates="jobs")
 
 
