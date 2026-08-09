@@ -4,6 +4,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
+from buildlens.core.normalization import normalize
 from buildlens.core.redaction import redact_lines, shannon_entropy
 
 SECRETS = {
@@ -121,3 +122,13 @@ def test_fr6_redaction_preserves_the_number_of_lines(lines: list[str]) -> None:
     redacted, _ = redact_lines(lines)
 
     assert len(redacted) == len(lines)
+
+
+@pytest.mark.parametrize("name", sorted(SECRETS))
+def test_fr6_secrets_do_not_survive_the_full_pipeline(name: str) -> None:
+    """Redaction runs inside normalize, not as an optional extra step."""
+    secret = SECRETS[name]
+    log = normalize(f"2026-08-03T18:44:31.0000000Z \x1b[31mtoken={secret}\x1b[0m\n")
+
+    assert secret not in log.to_text()
+    assert log.redactions
