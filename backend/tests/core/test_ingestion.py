@@ -3,7 +3,6 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
-from typing import Any
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
@@ -69,7 +68,6 @@ async def _repo(session: AsyncSession) -> Repository:
 
 async def test_backfill_records_runs_and_queues_ingestion(
     session_factory: async_sessionmaker[AsyncSession],
-    clean_db: Any,
     monkeypatch: MonkeyPatch,
 ) -> None:
     _stub_client(monkeypatch, runs=[_run(1), _run(2)])
@@ -100,7 +98,6 @@ async def test_backfill_records_runs_and_queues_ingestion(
 
 async def test_backfill_is_idempotent(
     session_factory: async_sessionmaker[AsyncSession],
-    clean_db: Any,
     monkeypatch: MonkeyPatch,
 ) -> None:
     """The unique constraint, not application logic, guarantees this."""
@@ -125,7 +122,6 @@ async def test_backfill_is_idempotent(
 
 async def test_rate_limit_defers_instead_of_failing(
     session_factory: async_sessionmaker[AsyncSession],
-    clean_db: Any,
     monkeypatch: MonkeyPatch,
 ) -> None:
     reset = datetime(2026, 8, 1, 15, 0, tzinfo=UTC)

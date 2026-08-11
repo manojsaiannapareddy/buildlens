@@ -11,14 +11,12 @@ from buildlens.db.models import IngestionTask, TaskStatus, TaskType
 pytestmark = pytest.mark.integration
 
 
-async def test_process_one_returns_false_on_empty_queue(
-    session_factory: Any, clean_db: Any
-) -> None:
+async def test_process_one_returns_false_on_empty_queue(session_factory: Any) -> None:
     assert await worker.process_one(session_factory) is False
 
 
 async def test_successful_task_is_marked_done(
-    session_factory: Any, clean_db: Any, monkeypatch: pytest.MonkeyPatch
+    session_factory: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     async def ok(session: Any, task: Any) -> None:
         return None
@@ -39,7 +37,7 @@ async def test_successful_task_is_marked_done(
 
 
 async def test_failing_task_is_rescheduled_with_error(
-    session_factory: Any, clean_db: Any, monkeypatch: pytest.MonkeyPatch
+    session_factory: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     async def boom(session: Any, task: Any) -> None:
         raise RuntimeError("handler exploded")
