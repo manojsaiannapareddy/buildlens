@@ -123,6 +123,11 @@ class Job(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     steps: Mapped[dict | list | None] = mapped_column(JSONB)
     log_line_count: Mapped[int] = mapped_column(Integer, default=0)
     workflow_run: Mapped["WorkflowRun"] = relationship("WorkflowRun", back_populates="jobs")
+    __table_args__ = (
+        UniqueConstraint(
+            "workflow_run_id", "github_job_id", name="uq_jobs_workflow_run_id_github_job_id"
+        ),
+    )
 
 
 class TaskType(StrEnum):
