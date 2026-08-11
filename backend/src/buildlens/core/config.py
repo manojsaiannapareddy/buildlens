@@ -5,6 +5,7 @@ invalid config. Everything else imports get_settings(), never os.environ.
 """
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from pydantic import SecretStr
@@ -19,6 +20,7 @@ class Settings(BaseSettings):
     )
 
     database_url: str
+    object_store_root: Path = Path("var/raw-logs")
     github_token: SecretStr | None = None
     github_api_base_url: str = "https://api.github.com"
     environment: Literal["dev", "test", "prod"] = "dev"

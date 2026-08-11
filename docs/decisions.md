@@ -261,3 +261,22 @@ Key implementation choices:
   * At-least-once delivery pushes real design work into every handler: idempotency is now a correctness requirement, not a nicety.
   * A table-based queue tops out well below a dedicated broker. Acceptable at this scale, and the ceiling is a documented trade-off rather than a surprise.
   * Dead-lettered tasks need a human, which means each one needs a runbook entry before the alarm that reports it is allowed to exist.
+
+## ADR-009: ObjectStore protocol for raw logs
+
+**Context**
+TC-4 requires raw logs stored immutably outside the database, keyed by run. Production is S3 (ADR-005 keeps Postgres as the only stateful service, and object storage is a separate concern). NFR-14 requires tests that touch no network.
+
+**Decision**
+Implement an `ObjectStore` protocol in `adapters/`, with a local filesystem backend now and S3 in milestone M5, selected by a factory reading `Settings`.
+
+**Alternatives considered**
+*   **S3 from day one via moto or LocalStack:** Provides real semantics in tests, but introduces a heavy dependency and a slower test suite for a milestone that only needs "put bytes, get bytes."
+*   **MinIO in Compose:** Provides a real S3 API, but requires a second stateful service to operate — the exact thing ADR-005 exists to avoid.
+*   **Bytes in a Postgres `bytea` column:** Transactional, but multi-megabyte blobs bloat the table, break `pg_dump` ergonomics, and fight the vector index for the buffer cache.
+
+**Consequences**
+*   The backend that runs in tests is not the backend that runs in production, so M5 owes at least one integration test against a real bucket.
+*   `file://` URIs stored in a dev database are machine-local and meaningless elsewhere.
+*   `LocalObjectStore` is code that never runs in production.
+*   The protocol only guarantees the *shape* matches, not that S3's consistency and size semantics behave like a filesystem.
