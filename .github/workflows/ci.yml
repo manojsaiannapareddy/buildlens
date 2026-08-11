@@ -10,11 +10,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  unit:
+    name: Unit tests (no database)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: cd backend && uv sync --locked
+      - run: cd backend && uv run pytest -m "not integration"
+        env:
+          BUILDLENS_DATABASE_URL: postgresql+asyncpg://unused@localhost/unused
+          BUILDLENS_GITHUB_TOKEN: unused
+
   quality:
     name: Lint, types, tests
     runs-on: ubuntu-latest
     env:
-         BUILDLENS_DATABASE_URL: postgresql+asyncpg://buildlens:localdev@localhost:5432/buildlens
+      BUILDLENS_DATABASE_URL: postgresql+asyncpg://buildlens:localdev@localhost:5432/buildlens
     defaults:
       run:
         working-directory: backend

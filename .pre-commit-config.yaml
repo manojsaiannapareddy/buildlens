@@ -14,3 +14,11 @@ repos:
       - id: trailing-whitespace
       - id: check-yaml
       - id: check-added-large-files
+  - repo: local
+    hooks:
+      - id: unit-tests
+        name: unit tests (no database)
+        entry: bash -c 'cd backend && uv run pytest -m "not integration" -q'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
