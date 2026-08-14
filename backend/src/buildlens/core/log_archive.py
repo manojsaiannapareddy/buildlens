@@ -31,6 +31,7 @@ MAX_UNCOMPRESSED_BYTES = 512 * 1024 * 1024
 
 _LEADING_INDEX = re.compile(r"^\d+_")
 _NON_ALNUM = re.compile(r"[^a-z0-9]+")
+_ILLEGAL_IN_FILENAME = re.compile(r'[<>:"/\\|?*]')
 
 
 class LogArchiveError(Exception):
@@ -41,8 +42,13 @@ def slug(name: str) -> str:
     """Collapse a job or file name to a comparable key.
 
     `3_Build (3.12).txt` and `Build (3.12)` both reduce to `build-3-12`.
+
+    Illegal filename characters are removed before the collapse, not after:
+    GitHub deletes them, so treating them as separators would put a hyphen
+    where the archive entry has nothing and the two would never match.
     """
     stem = _LEADING_INDEX.sub("", name.strip())
+    stem = _ILLEGAL_IN_FILENAME.sub("", stem)
     return _NON_ALNUM.sub("-", stem.lower()).strip("-")
 
 

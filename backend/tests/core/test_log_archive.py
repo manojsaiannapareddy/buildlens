@@ -2,6 +2,7 @@
 
 import io
 import zipfile
+from pathlib import PurePosixPath
 
 import pytest
 
@@ -31,9 +32,18 @@ def _zip(entries: dict[str, bytes]) -> bytes:
         ("Run tests / unit", "run-tests-unit"),
         ("  spaced  ", "spaced"),
         ("", ""),
+        (
+            "benchmarks walltime (colour_science|static_frame)",
+            "benchmarks-walltime-colour-sciencestatic-frame",
+        ),
+        ('a<b>c:d"e/f\\g|h?i*j', "abcdefghij"),
+        ("Run tests / unit", "run-tests-unit"),
     ],
 )
-def test_slug_collapses_names_to_a_comparable_key(name: str, expected: str) -> None:
+def test_slug_collapses_names_to_a_comparable_key(
+    name: str,
+    expected: str,
+) -> None:
     assert slug(name) == expected
 
 
@@ -127,3 +137,31 @@ def test_expansion_is_bounded_by_bytes_actually_read(monkeypatch: pytest.MonkeyP
     archive = _zip({"1_build.txt": b"x\n" * 500})
     with pytest.raises(LogArchiveError):
         job_log_line_counts(archive)
+
+
+@pytest.mark.parametrize(
+    ("job_name", "archive_entry"),
+    [
+        (
+            "benchmarks walltime (colour_science|static_frame)",
+            "1_benchmarks walltime (colour_sciencestatic_frame).txt",
+        ),
+        (
+            "benchmarks walltime (pydantic|freqtrade|multithreaded|altair)",
+            "2_benchmarks walltime (pydanticfreqtrademultithreadedaltair).txt",
+        ),
+        ("cargo test (linux, release)", "17_cargo test (linux, release).txt"),
+        (
+            "benchmarks instrumented ty (memory constraint_set)",
+            "11_benchmarks instrumented ty (memory constraint_set).txt",
+        ),
+    ],
+)
+def test_real_github_names_match_their_archive_entries(job_name: str, archive_entry: str) -> None:
+    """Names taken verbatim from an astral-sh/ruff run archive.
+
+    GitHub deletes filename-illegal characters rather than substituting them,
+    so a slug that treats them as separators produces a hyphen the entry does
+    not have. Every one of these silently counted zero lines before the fix.
+    """
+    assert slug(job_name) == slug(PurePosixPath(archive_entry).stem)
