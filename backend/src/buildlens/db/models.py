@@ -4,7 +4,6 @@ from enum import StrEnum
 
 from sqlalchemy import (
     BigInteger,
-    Boolean,
     DateTime,
     ForeignKey,
     Index,
@@ -56,7 +55,6 @@ class Repository(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     owner: Mapped[str] = mapped_column(String(255), index=True)
     name: Mapped[str] = mapped_column(String(255), index=True)
     default_branch: Mapped[str] = mapped_column(String(255), default="main")
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     status: Mapped[RepoStatus] = mapped_column(
         _enum(RepoStatus, "repo_status"), default=RepoStatus.ACTIVE, index=True
