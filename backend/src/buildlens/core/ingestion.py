@@ -82,15 +82,21 @@ def _job_status(value: str) -> JobStatus:
         return JobStatus.QUEUED
 
 
-async def ensure_repository(session: AsyncSession, owner: str, name: str) -> Repository:
-    """Register a public repo (idempotent), and queue its backfill."""
+async def ensure_repository(
+    session: AsyncSession, owner: str, name: str
+) -> tuple[Repository, bool]:
+    """Register a public repo (idempotent), and queue its backfill.
+
+    Returns the repository and whether this call created it, so the caller can
+    distinguish "created" from "already existed" without querying again.
+    """
     existing = (
         await session.execute(
             select(Repository).where(Repository.owner == owner, Repository.name == name)
         )
     ).scalar_one_or_none()
     if existing is not None:
-        return existing
+        return existing, False
 
     async with make_client() as gh:
         info = await gh.get_repo(owner, name)
@@ -109,7 +115,7 @@ async def ensure_repository(session: AsyncSession, owner: str, name: str) -> Rep
         session, TaskType.BACKFILL_REPO, {"repository_id": str(repo.id)}, priority=50
     )
     logger.info("repository.registered", repository_id=str(repo.id), owner=owner, name=name)
-    return repo
+    return repo, True
 
 
 async def _load_repo(session: AsyncSession, task: IngestionTask) -> Repository:

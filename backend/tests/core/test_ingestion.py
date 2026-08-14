@@ -15,6 +15,7 @@ from buildlens.adapters.github import (
     GitHubNotFoundError,
     GitHubRateLimitError,
     JobInfo,
+    RepoInfo,
     RunInfo,
 )
 from buildlens.core import ingestion
@@ -403,3 +404,32 @@ async def test_ingest_run_tolerates_a_conclusion_github_invented(
     assert jobs[0].conclusion is RunConclusion.OTHER
     assert jobs[0].status is JobStatus.QUEUED
     assert jobs[0].step_name is None
+
+
+async def test_ensure_repository_reports_whether_it_created_the_row(
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """The API needs 201-vs-200 without running its own query (api never touches db)."""
+
+    class Stub:
+        async def get_repo(self, owner: str, name: str) -> RepoInfo:
+            return RepoInfo(
+                github_id=99, owner=owner, name=name, default_branch="main", private=False
+            )
+
+    @asynccontextmanager
+    async def factory() -> AsyncIterator[Stub]:
+        yield Stub()
+
+    monkeypatch.setattr(ingestion, "make_client", factory)
+
+    async with session_factory() as session:
+        repo, created = await ingestion.ensure_repository(session, "o", "r")
+        assert created is True
+        await session.commit()
+
+        again, created_again = await ingestion.ensure_repository(session, "o", "r")
+
+    assert created_again is False
+    assert again.id == repo.id

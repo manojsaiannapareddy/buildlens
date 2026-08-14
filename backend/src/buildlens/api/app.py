@@ -11,6 +11,7 @@ from sqlalchemy import text
 
 from buildlens.api.errors import add_error_handlers, problem_response
 from buildlens.api.middleware import add_request_id_middleware
+from buildlens.api.routers import repos
 from buildlens.core.config import get_settings
 from buildlens.core.logging_setup import configure_logging
 from buildlens.db.session import create_engine, create_session_factory
@@ -44,6 +45,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title="buildlens", version="0.1.0", lifespan=lifespan)
     add_request_id_middleware(app)
     add_error_handlers(app)
+    app.include_router(repos.router)
 
     @app.get("/healthz", tags=["platform"])
     async def healthz() -> dict[str, str]:

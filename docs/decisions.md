@@ -280,3 +280,24 @@ Implement an `ObjectStore` protocol in `adapters/`, with a local filesystem back
 *   `file://` URIs stored in a dev database are machine-local and meaningless elsewhere.
 *   `LocalObjectStore` is code that never runs in production.
 *   The protocol only guarantees the *shape* matches, not that S3's consistency and size semantics behave like a filesystem.
+
+## ADR-010: Polling scheduler in the worker process
+
+**Context**
+FR-3 requires cadence-based polling. Workers scale horizontally, so every replica would run the same sweep. GitHub allows 5,000 requests/hour and ETags make unchanged polls free.
+
+**Decision**
+Implement a loop inside the worker process, leader-elected per sweep via `pg_try_advisory_xact_lock`, using a uniform 10-minute cadence with jitter, skipping repos with an unfinished poll task.
+
+**Alternatives considered**
+*   **Separate scheduler process:** Another deploy unit and health check for one loop.
+*   **Leader-election table with a lease:** Works, but introduces a table to maintain and a lease to expire (the advisory lock does this for free).
+*   **Cron or cloud scheduler:** External state, no local dev story, and breaks the one-image model.
+*   **Adaptive per-repo intervals:** Optimizes a cost ETags already make near-zero, while adding state and a new failure mode.
+*   **Webhooks:** Lower latency, but requires a public endpoint and secret management (an M5+ concern).
+
+**Consequences**
+*   Worst-case 10-minute detection latency.
+*   The advisory lock key is global to the database, so any future lock must not collide.
+*   A persistently failing tick is quiet by design and needs an alert in M5.
+*   The scheduler shares a process with the drain loop, so a runaway sweep would compete for the same connection pool.
