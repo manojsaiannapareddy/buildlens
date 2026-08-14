@@ -133,7 +133,6 @@ class TaskType(StrEnum):
     POLL_REPO = "poll_repo"
     INGEST_RUN = "ingest_run"
     DIAGNOSE_RUN = "diagnose_run"
-    GC_REPO = "gc_repo"
 
 
 class TaskStatus(StrEnum):

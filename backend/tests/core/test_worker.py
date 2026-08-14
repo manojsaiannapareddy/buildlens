@@ -21,10 +21,10 @@ async def test_successful_task_is_marked_done(
     async def ok(session: Any, task: Any) -> None:
         return None
 
-    monkeypatch.setitem(worker.HANDLERS, TaskType.GC_REPO, ok)
+    monkeypatch.setitem(worker.HANDLERS, TaskType.POLL_REPO, ok)
 
     async with session_factory() as session:
-        task = await task_queue.enqueue(session, TaskType.GC_REPO, {})
+        task = await task_queue.enqueue(session, TaskType.POLL_REPO, {})
         await session.commit()
         task_id = task.id
 
@@ -42,10 +42,10 @@ async def test_failing_task_is_rescheduled_with_error(
     async def boom(session: Any, task: Any) -> None:
         raise RuntimeError("handler exploded")
 
-    monkeypatch.setitem(worker.HANDLERS, TaskType.GC_REPO, boom)
+    monkeypatch.setitem(worker.HANDLERS, TaskType.POLL_REPO, boom)
 
     async with session_factory() as session:
-        task = await task_queue.enqueue(session, TaskType.GC_REPO, {})
+        task = await task_queue.enqueue(session, TaskType.POLL_REPO, {})
         await session.commit()
         task_id = task.id
 

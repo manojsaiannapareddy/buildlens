@@ -111,7 +111,7 @@ hand-written requirements.txt) does not guarantee this.
   didn't exist yet, and the cache preserved the broken build. Diagnosed by
   inspecting site-packages; fixed with `uv sync --reinstall-package buildlens`.
 
-## ADR-004L Code quality toolchain: ruff and mypy with graded strictness.
+## ADR-004 Code quality toolchain: ruff and mypy with graded strictness.
 
 **Date:** 2026-07-25 . **Status:** Accepted
 
@@ -301,3 +301,15 @@ Implement a loop inside the worker process, leader-elected per sweep via `pg_try
 *   The advisory lock key is global to the database, so any future lock must not collide.
 *   A persistently failing tick is quiet by design and needs an alert in M5.
 *   The scheduler shares a process with the drain loop, so a runaway sweep would compete for the same connection pool.
+
+## ADR-011: Dedicated Test Database and Safety Guard
+
+**Context**
+Running the test suite against the development database using a `clean_database` truncation fixture wiped out locally ingested development data (e.g., real GitHub logs downloaded during M1 testing).
+
+**Decision**
+Require a separate `buildlens_test` database for the test suite, enforced by a programmatic guard in the test fixture that explicitly aborts if the connection URL does not end in `_test`.
+
+**Consequences**
+*   Development data is permanently shielded from accidental deletion by the test suite.
+*   Developers must explicitly provision the test database locally to run tests.

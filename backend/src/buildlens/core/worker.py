@@ -36,7 +36,6 @@ HANDLERS: dict[TaskType, Handler] = {
     TaskType.POLL_REPO: ingestion.poll_repo,
     TaskType.INGEST_RUN: ingestion.ingest_run,
     TaskType.DIAGNOSE_RUN: _not_implemented,
-    TaskType.GC_REPO: _not_implemented,
 }
 
 

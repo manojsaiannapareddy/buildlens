@@ -51,7 +51,7 @@ async def test_failure_dead_letters_after_max_attempts(
     session_factory: SessionFactory,
 ) -> None:
     async with session_factory() as session:
-        task = await task_queue.enqueue(session, TaskType.GC_REPO, {})
+        task = await task_queue.enqueue(session, TaskType.POLL_REPO, {})
         task.attempts = task.max_attempts
         await task_queue.mark_failed(session, task, "boom")
 
