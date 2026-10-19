@@ -69,7 +69,7 @@ form feed, and would shift every number after one.
 
 ## Current status
 
-**141 tests passing.** Four quality gates — ruff, mypy, `alembic check`, pytest
+**148 tests passing.** Four quality gates — ruff, mypy, `alembic check`, pytest
 — run locally via pre-commit and in CI on every push.
 
 ### M0 — Foundations: complete
@@ -105,7 +105,7 @@ form feed, and would shift every number after one.
 failed runs and ingested them end to end: 1.39 MB archives expanding to 9.94 MB,
 34 job logs each, ~40 job rows per run, no rate limiting.
 
-That run also found a bug 141 passing tests had missed. GitHub *deletes*
+That run also found a bug 148 passing tests had missed. GitHub *deletes*
 characters that are illegal in a Windows filename when naming archive entries
 rather than substituting them, so the job `benchmarks walltime
 (colour_science|static_frame)` becomes `1_benchmarks walltime
